@@ -1,0 +1,7 @@
+name = "QUT"
+uuid = "27f04016-b86d-43db-8674-484fbf3a6bce"
+authors = ["opentable fetcher <opentable-fetcher@git.nomics.world>"]
+version = "0.1.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

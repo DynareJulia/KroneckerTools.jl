@@ -295,7 +295,7 @@ convert(::Type{Array{Float64, 2}}, x::Base.ReshapedArray{Float64,2,SubArray{Floa
 
 
 """
-    kron_mul_elem_t!(p::Int64, q::Int64, m::Int64, a::AbstractMatrix, b::AbstractVector, c::AbstractVector)
+    kron_mul_elem!(p::Int64, q::Int64, m::Int64, a::AbstractMatrix, b::AbstractVector, c::AbstractVector)
 
 Performs (I_p ⊗ a ⊗ I_q) b, where m,n = size(a). The result is stored in c.
 """

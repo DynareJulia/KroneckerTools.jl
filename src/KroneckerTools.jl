@@ -11,6 +11,35 @@ export a_mul_kron_b!, a_mul_b_kron_c!, kron_at_kron_b_mul_c!, a_mul_b_kron_c_d!,
 include("ExtendedMul.jl")
 
 """
+Content:
+c = a*(b ⊗ b ⊗ ... ⊗ b) 
+a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, order::Int64, work1::AbstractVector, work2::AbstractVector)
+a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, order::Int64)
+a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractVector,work::AbstractVector)
+d = a*b*(c ⊗ c ⊗ ... ⊗ c)
+a_mul_b_kron_c!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, c::AbstractMatrix, order::Int64,work1::AbstractVector,work2::AbstractVector)
+d = a^T*b*(c ⊗ c ⊗ ... ⊗ c)
+at_mul_b_kron_c!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, c::AbstractMatrix, order::Int64, work1::AbstractVector, work2::AbstractVector)
+d = a*b*(c^T ⊗ c^T ⊗ ... ⊗ c^T)
+a_mul_b_kron_ct!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, c::AbstractMatrix, order::Int64, work1::AbstractVector, work2::AbstractVector)
+e = a*b*(c ⊗ d ⊗ ... ⊗ d)
+a_mul_b_kron_c_d!(e::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, c::AbstractMatrix, d::AbstractMatrix, order::Int64, work1::AbstractVector, work2::AbstractVector)
+d = (a^T ⊗ a^T ⊗ ... ⊗ a^T ⊗ b)*c
+kron_at_kron_b_mul_c!(d::AbstractVector, offset_d::Int64, a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, offset_c::Int64, work1::AbstractVector, work2::AbstractVector, offset_w::Int64)
+kron_at_kron_b_mul_c!(d::AbstractVector, a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, work1::AbstractVector, work2::AbstractVector)
+kron_at_kron_b_mul_c!(a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, offset_c::Int64, work::AbstractVector)
+kron_at_kron_b_mul_c!(a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, work::AbstractVector)
+c = (a ⊗ a ⊗ ... ⊗ a)*b
+kron_a_mul_b!(c::AbstractVector, a::AbstractMatrix, order::Int64, b::AbstractVector, q::Int64, work1::AbstractVector, work2::AbstractVector)
+c = (I_p ⊗ a ⊗ I_q)*b
+kron_mul_elem!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b::AbstractVector, offset_b::Int64, p::Int64, q::Int64)
+kron_mul_elem!(c::AbstractVector, a::AbstractMatrix, b::AbstractVector, p::Int64, q::Int64)
+c = (I_p ⊗ a^T ⊗ I_q)*b
+kron_mul_elem_t!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b::AbstractVector, offset_b::Int64, p::Int64, q::Int64)
+kron_mul_elem_t!(c::AbstractVector, a::AbstractMatrix, b::AbstractVector, p::Int64, q::Int64)
+"""
+
+"""
     a_mul_kron_b!(c::AbstractVector, a::AbstractVecOrMat, b::AbstractMatrix, order::Int64)
 
 Performs a*(b ⊗ b ⊗ ... ⊗ b). The solution is returned in matrix c. order indicates the number of occurences of b
@@ -98,8 +127,8 @@ function a_mul_b_kron_c!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix
 end
 
 """
-    function kron_at_kron_b_mul_c!(d::AbstractVector, offset_c::Int64, a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, offset_cc::Int64, work1::AbstractVector, work2::AbstractVector)
-computes d = (a^T ⊗ a^T ⊗ ... ⊗ a^T ⊗ b)c using work vectors work1 and work2
+    function kron_at_kron_b_mul_c!(d::AbstractVector, offset_d::Int64, a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, offset_c::Int64, work1::AbstractVector, work2::AbstractVector, offset_w::Int64)
+computes d = (a^T ⊗ a^T ⊗ ... ⊗ a^T ⊗ b)c using data from c at offset_c and work vectors work1 and work2 at offset_w
 """ 
 function kron_at_kron_b_mul_c!(d::AbstractVector, offset_d::Int64, a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, offset_c::Int64, work1::AbstractVector, work2::AbstractVector, offset_w::Int64)
     mb,nb = size(b)
@@ -151,11 +180,19 @@ function kron_at_kron_b_mul_c!(d::AbstractVector, a::AbstractMatrix, order::Int6
     end
 end
 
+"""
+    function kron_at_kron_b_mul_c!(a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, offset_c::Int64, work::AbstractVector)
+updates c at offset_c with (a^T ⊗ a^T ⊗ ... ⊗ a^T ⊗ b)c using c and work as work vectors
+""" 
 function kron_at_kron_b_mul_c!(a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, offset_c::Int64, work::AbstractVector)
     kron_at_kron_b_mul_c!(work, 1, a, order, b, c, offset_c, work, c, offset_c)
     copy!(c, work)
 end
 
+"""
+    function kron_at_kron_b_mul_c!(a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, work::AbstractVector)
+updates c  with (a^T ⊗ a^T ⊗ ... ⊗ a^T ⊗ b)c using c and work as work vectors
+""" 
 function kron_at_kron_b_mul_c!(a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, work::AbstractVector)
     kron_at_kron_b_mul_c!(work, a, order, b, c, work, c)
     copy!(c, work)
@@ -219,7 +256,7 @@ function a_mul_b_kron_ct!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatri
         kron_a_mul_b!(vec(d), c, order, work1, ma, work1, work2)
     else
         kron_a_mul_b!(work1, b, order, c, mb, work1, work2)
-        At_mul_B!(vec(d), 1, a, 1, ma, na, work1, 1, nc^order)
+        At_mul_B!(vec(d), 1, a, 1, na, ma, work1, 1, nc^order)
     end
 end
                       
@@ -263,7 +300,7 @@ end
 """
     a_mul_b_kron_c_d!(d::AbstractVecOrMat, a::AbstractVecOrMat, b::AbstractMatrix, c::AbstractMatrix, order::Int64)
 
-Performs a*b*(c ⊗ d ⊗ ... ⊗ d). The solution is returned in matrix or vector e order indicates the number of occurences of d. c and d must be square matrices
+Performs e = a*b*(c ⊗ d ⊗ ... ⊗ d). The solution is returned in matrix or vector e order indicates the number of occurences of d. c and d must be square matrices
 
 We use vec(a*b*(c ⊗ d ⊗ ... ⊗ d)) = (c' ⊗ d' ⊗ ... ⊗ d' ⊗ a)vec(b)
 
@@ -307,55 +344,21 @@ function kron_mul_elem!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b
     begin
         if p == 1 && q == 1
             # a*b
-            A_mul_B!(c, offset_c, a, 1, m, n, b, offset_b, 1)
+            A_mul_B!(c, offset_c, a, b, offset_b, 1)
         elseif q == 1
             #  (I_p ⊗ a)*b = vec(a*[b_1 b_2 ... b_p])
-            A_mul_B!(c, offset_c, a, 1, m, n, b, offset_b, p)
+            A_mul_B!(c, offset_c, a, b, offset_b, p)
         elseif p == 1
             # (a ⊗ I_q)*b = (b'*(a' ⊗ I_q))' = vec(reshape(b,q,m)*a')
-            A_mul_Bt!(c, offset_c, b, offset_b, q, n, a, 1, m)
+            A_mul_Bt!(c, offset_c, b, offset_b, q, n, a)
         else
             # (I_p ⊗ a ⊗ I_q)*b = vec([(a ⊗ I_q)*b_1 (a ⊗ I_q)*b_2 ... (a ⊗ I_q)*b_p])
             mq = m*q
             nq = n*q
             for i=1:p
-                A_mul_Bt!(c, offset_c, b, offset_b, q, n, a, 1, m)
+                A_mul_Bt!(c, offset_c, b, offset_b, q, n, a)
                 offset_b += nq
                 offset_c += mq
-            end
-        end
-    end
-end
-
-
-"""
-    kron_mul_elem_t!(p::Int64, q::Int64, m::Int64, a::AbstractMatrix, b::AbstractVector, c::AbstractVector)
-
-Performs (I_p ⊗ a' ⊗ I_q) b, where m,n = size(a). The result is stored in c.
-"""
-function kron_mul_elem_t!(c::Vector, offset_c::Int64, a::AbstractMatrix, b::Vector, offset_b::Int64, p::Int64, q::Int64)
-    m, n = size(a)
-    length(b) >= m*p*q || throw(DimensionMismatch("The dimension of vector b, $(length(b)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
-    length(c) >= n*p*q || throw(DimensionMismatch("The dimension of the vector c, $(length(c)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
-    
-    begin
-        if p == 1 && q == 1
-            # a'*b
-            At_mul_B!(c, offset_c, a, 1, m, n, b, offset_b, 1)
-        elseif q == 1
-            #  (I_p ⊗ a')*b = vec(a'*[b_1 b_2 ... b_p])
-            At_mul_B!(c, offset_c, a, 1, m, n, b, offset_b, p)
-        elseif p == 1
-            # (a' ⊗ I_q)*b = (b'*(a ⊗ I_q))' = vec(reshape(b,q,m)*a)
-            A_mul_B!(c, offset_c, b, offset_b, q, m, a, 1, n)
-        else
-            # (I_p ⊗ a' ⊗ I_q)*b = vec([(a' ⊗ I_q)*b_1 (a' ⊗ I_q)*b_2 ... (a' ⊗ I_q)*b_p])
-            mq = m*q
-            nq = n*q
-            for i=1:p
-                A_mul_B!(c, offset_c, b, offset_b, q, m, a, 1, n)
-                offset_b += mq
-                offset_c += nq
             end
         end
     end
@@ -365,19 +368,41 @@ function kron_mul_elem!(c::AbstractVector, a::AbstractMatrix, b::AbstractVector,
     kron_mul_elem!(c, 1, a, b, 1, p, q)
 end
 
-#function kron_mul_elem_t!(c::Vector, a::SubArray{Float64,2,Array{Float64,2},Tuple{Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true}, b::Vector, p::Int64, q::Int64)
-#    kron_mul_elem_t!(c, , a, b, 1, p, q)
-#end
 
-function kron_mul_elem_t!(c::SubArray{Float64,1,Array{Float64,1},Tuple{UnitRange{Int64}},true}, a::AbstractMatrix, b::Vector{Float64}, p::Int64, q::Int64)
-    kron_mul_elem_t!(c.parent, c.offset1 + 1, a, b, 1, p, q)
+"""
+    kron_mul_elem_t!(p::Int64, q::Int64, m::Int64, a::AbstractMatrix, b::AbstractVector, c::AbstractVector)
+
+Performs (I_p ⊗ a' ⊗ I_q) b, where m,n = size(a). The result is stored in c.
+"""
+function kron_mul_elem_t!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b::AbstractVector, offset_b::Int64, p::Int64, q::Int64)
+    m, n = size(a)
+    length(b) >= m*p*q || throw(DimensionMismatch("The dimension of vector b, $(length(b)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
+    length(c) >= n*p*q || throw(DimensionMismatch("The dimension of the vector c, $(length(c)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
+    
+    begin
+        if p == 1 && q == 1
+            # a'*b
+            At_mul_B!(c, offset_c, a, b, offset_b, 1)
+        elseif q == 1
+            #  (I_p ⊗ a')*b = vec(a'*[b_1 b_2 ... b_p])
+            At_mul_B!(c, offset_c, a, b, offset_b, p)
+        elseif p == 1
+            # (a' ⊗ I_q)*b = (b'*(a ⊗ I_q))' = vec(reshape(b,q,m)*a)
+            A_mul_B!(c, offset_c, b, offset_b, q, m, a)
+        else
+            # (I_p ⊗ a' ⊗ I_q)*b = vec([(a' ⊗ I_q)*b_1 (a' ⊗ I_q)*b_2 ... (a' ⊗ I_q)*b_p])
+            mq = m*q
+            nq = n*q
+            for i=1:p
+                A_mul_B!(c, offset_c, b, offset_b, q, m, a)
+                offset_b += mq
+                offset_c += nq
+            end
+        end
+    end
 end
 
-function kron_mul_elem_t!(c::SubArray{Float64,1,Array{Float64,1},Tuple{UnitRange{Int64}},true}, a::AbstractMatrix, b::SubArray{Float64,1,Array{Float64,1},Tuple{UnitRange{Int64}},true}, p::Int64, q::Int64)
-    kron_mul_elem_t!(c.parent, c.offset1 + 1, a, b.parent, b.offset1 + 1, p, q)
-end
-
-function kron_mul_elem_t!(c::Vector, a::AbstractMatrix, b::Vector, p::Int64, q::Int64)
+function kron_mul_elem_t!(c::AbstractVector, a::AbstractMatrix, b::AbstractVector, p::Int64, q::Int64)
     kron_mul_elem_t!(c, 1, a, b, 1, p, q)
 end
 

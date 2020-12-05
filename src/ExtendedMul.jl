@@ -61,7 +61,7 @@ function At_mul_B!(c::AbstractVecOrMat{Float64}, offset_c::Int64, a::AbstractVec
 end
 
 function A_mul_Bt!(c::AbstractVecOrMat{Float64}, offset_c::Int64, a::AbstractVecOrMat{Float64},
-                  offset_a::Int64, ma::Int64, na::Int64, b::VecOrMat{Float64},
+                  offset_a::Int64, ma::Int64, na::Int64, b::AbstractVecOrMat{Float64},
                   offset_b::Int64, nb::Int64)
     ccall((@blasfunc(dgemm_), libblas), Cvoid,
           (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt},

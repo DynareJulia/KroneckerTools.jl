@@ -1,7 +1,7 @@
 name = "KroneckerTools"
 uuid = "7e59e93b-e0cb-42c7-aa95-426cb754d61e"
 authors = ["MichelJuillard <michel.juillard@mjui.fr>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

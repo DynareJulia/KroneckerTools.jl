@@ -9,8 +9,8 @@ uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[QUT]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "513d027ff581d65f5b942818984efd4e7854ae5b"
+git-tree-sha1 = "9e84a7a1287e8bd9e295cac3fb0827de1f767ab3"
 repo-rev = "master"
 repo-url = "http://git.dynare.org/julia-packages/qut.git"
 uuid = "a05c3b42-3203-472f-bab1-afcf4068e833"
-version = "0.1.1"
+version = "0.1.2"

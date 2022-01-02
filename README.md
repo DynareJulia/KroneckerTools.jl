@@ -46,9 +46,6 @@ A chain of Kronecker products, (A<sub>1</sub> ⊗ A<sub>2</sub> ⊗ ... ⊗
     (I<sub>p<sub>2</sub></sub> ⊗ A<sub>2</sub> ⊗ I<sub>p<sub>2</sub></sub>)* ... *
         (I<sub>p<sub>n</sub></sub> ⊗ A<sub>n</sub>)b where b is a vector and p<sub>1></sub>, p<sub>2</sub>, ..., p<sub>n</sub>, q<sub>1</sub>, q<sub>2</sub>, ...,q<sub>n</sub> are such as making each group in brackets conformable.      
 
-## Documentation
-
-
 
 ## References
 O. Kamenik (2005), "Solving SDGE models: A new algorithm for the Sylvester

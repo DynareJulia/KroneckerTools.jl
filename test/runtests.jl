@@ -4,7 +4,7 @@ using Test
 import KroneckerTools: kron_mul_elem!, kron_mul_elem_t!, a_mul_kron_b!,
     a_mul_b_kron_c!, a_mul_b_kron_ct!, at_mul_b_kron_c!,
     a_mul_b_kron_c_d!, kron_a_mul_b!, kron_at_mul_b!,
-    kron_at_kron_b_mul_c!, QUT.QuasiUpperTriangular,
+    kron_at_kron_b_mul_c!, QuasiTriangular.QuasiUpperTriangular,
     A_mul_B!, At_mul_B!, A_mul_Bt!, At_mul_Bt!
 
 Random.seed!(123)

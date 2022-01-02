@@ -1,7 +1,7 @@
 using LinearAlgebra
+using QuasiTriangular
 using Random
 using Test
-using QUT
 using KroneckerTools
 
 Random.seed!(123)
@@ -15,7 +15,7 @@ Random.seed!(123)
 for m in [1, 3]
     for n in [3, 4]
         local a = randn(n,n)
-        t = QUT.QuasiUpperTriangular(schur(a).T)
+        t = QuasiTriangular.QuasiUpperTriangular(schur(a).T)
         depth = 4
         for p = 0:4
             for q = depth - p

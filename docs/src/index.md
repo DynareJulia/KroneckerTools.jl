@@ -15,10 +15,10 @@ The following computations are performed
 - E = A*B*(C ⊗ D ⊗ ... ⊗ D)
 
 ## Installation
- ```
+```
  julia> using Pkg
  julia> Pkg.add("KroneckerTools")
- ```
+```
  
 ## Algorithms
 

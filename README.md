@@ -24,8 +24,7 @@ The following computations are performed
  
 ## Documentation
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://DynareJulia.github.io/KroneckerTools.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://DynareJulia.github.io/KroneckerTools/dev)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://DynareJulia.github.io/KroneckerTools.jl/dev)
 
 ## Algorithms
 

@@ -9,3 +9,4 @@ QuasiTriangular = "e29349eb-b3c8-4189-b6e7-6b7aca9b1830"
 
 [compat]
 julia = "1"
+QuasiTriangular = "0.1"

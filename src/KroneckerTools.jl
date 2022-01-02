@@ -5,9 +5,9 @@ using LinearAlgebra.BLAS
 using QuasiTriangular
 import QuasiTriangular: A_mul_B!, At_mul_B!, A_mul_Bt!
 import Base.convert
-export a_mul_kron_b!, a_mul_b_kron_c!, kron_at_kron_b_mul_c!, a_mul_b_kron_c_d!, at_mul_b_kron_c!, a_mul_b_kron_ct!
 
 include("ExtendedMul.jl")
+export a_mul_kron_b!, a_mul_b_kron_c!, kron_at_kron_b_mul_c!, a_mul_b_kron_c_d!, at_mul_b_kron_c!, a_mul_b_kron_ct!
 
 """
 Content:
@@ -37,6 +37,81 @@ c = (I_p ⊗ a^T ⊗ I_q)*b
 kron_mul_elem_t!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b::AbstractVector, offset_b::Int64, p::Int64, q::Int64)
 kron_mul_elem_t!(c::AbstractVector, a::AbstractMatrix, b::AbstractVector, p::Int64, q::Int64)
 """
+
+"""
+    kron_mul_elem!(p::Int64, q::Int64, m::Int64, a::AbstractMatrix, b::AbstractVector, c::AbstractVector)
+
+Performs (I_p ⊗ a ⊗ I_q) b, where m,n = size(a). The result is stored in c.
+"""
+function kron_mul_elem!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b::AbstractVector, offset_b::Int64, p::Int64, q::Int64)
+    m, n = size(a)
+    length(b) >= n*p*q || throw(DimensionMismatch("The dimension of vector b, $(length(b)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
+    length(c) >= m*p*q || throw(DimensionMismatch("The dimension of the vector c, $(length(c)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
+
+    begin
+        if p == 1 && q == 1
+            # a*b
+            A_mul_B!(c, offset_c, a, b, offset_b, 1)
+        elseif q == 1
+            #  (I_p ⊗ a)*b = vec(a*[b_1 b_2 ... b_p])
+            A_mul_B!(c, offset_c, a, b, offset_b, p)
+        elseif p == 1
+            # (a ⊗ I_q)*b = (b'*(a' ⊗ I_q))' = vec(reshape(b,q,m)*a')
+            A_mul_Bt!(c, offset_c, b, offset_b, q, n, a)
+        else
+            # (I_p ⊗ a ⊗ I_q)*b = vec([(a ⊗ I_q)*b_1 (a ⊗ I_q)*b_2 ... (a ⊗ I_q)*b_p])
+            mq = m*q
+            nq = n*q
+            for i=1:p
+                A_mul_Bt!(c, offset_c, b, offset_b, q, n, a)
+                offset_b += nq
+                offset_c += mq
+            end
+        end
+    end
+end
+
+function kron_mul_elem!(c::AbstractVector, a::AbstractMatrix, b::AbstractVector, p::Int64, q::Int64)
+    kron_mul_elem!(c, 1, a, b, 1, p, q)
+end
+
+
+"""
+    kron_mul_elem_t!(p::Int64, q::Int64, m::Int64, a::AbstractMatrix, b::AbstractVector, c::AbstractVector)
+
+Performs (I_p ⊗ a' ⊗ I_q) b, where m,n = size(a). The result is stored in c.
+"""
+function kron_mul_elem_t!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b::AbstractVector, offset_b::Int64, p::Int64, q::Int64)
+    m, n = size(a)
+    length(b) >= m*p*q || throw(DimensionMismatch("The dimension of vector b, $(length(b)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
+    length(c) >= n*p*q || throw(DimensionMismatch("The dimension of the vector c, $(length(c)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
+    
+    begin
+        if p == 1 && q == 1
+            # a'*b
+            At_mul_B!(c, offset_c, a, b, offset_b, 1)
+        elseif q == 1
+            #  (I_p ⊗ a')*b = vec(a'*[b_1 b_2 ... b_p])
+            At_mul_B!(c, offset_c, a, b, offset_b, p)
+        elseif p == 1
+            # (a' ⊗ I_q)*b = (b'*(a ⊗ I_q))' = vec(reshape(b,q,m)*a)
+            A_mul_B!(c, offset_c, b, offset_b, q, m, a)
+        else
+            # (I_p ⊗ a' ⊗ I_q)*b = vec([(a' ⊗ I_q)*b_1 (a' ⊗ I_q)*b_2 ... (a' ⊗ I_q)*b_p])
+            mq = m*q
+            nq = n*q
+            for i=1:p
+                A_mul_B!(c, offset_c, b, offset_b, q, m, a)
+                offset_b += mq
+                offset_c += nq
+            end
+        end
+    end
+end
+
+function kron_mul_elem_t!(c::AbstractVector, a::AbstractMatrix, b::AbstractVector, p::Int64, q::Int64)
+    kron_mul_elem_t!(c, 1, a, b, 1, p, q)
+end
 
 """
     a_mul_kron_b!(c::AbstractVector, a::AbstractVecOrMat, b::AbstractMatrix, order::Int64)
@@ -329,80 +404,5 @@ end
 
 convert(::Type{Array{Float64, 2}}, x::Base.ReshapedArray{Float64,2,SubArray{Float64,1,Array{Float64,1},Tuple{UnitRange{Int64}},true},Tuple{}}) = unsafe_wrap(Array,pointer(x.parent.parent,x.parent.indexes[1][1]),x.dims)
 
-
-"""
-    kron_mul_elem!(p::Int64, q::Int64, m::Int64, a::AbstractMatrix, b::AbstractVector, c::AbstractVector)
-
-Performs (I_p ⊗ a ⊗ I_q) b, where m,n = size(a). The result is stored in c.
-"""
-function kron_mul_elem!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b::AbstractVector, offset_b::Int64, p::Int64, q::Int64)
-    m, n = size(a)
-    length(b) >= n*p*q || throw(DimensionMismatch("The dimension of vector b, $(length(b)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
-    length(c) >= m*p*q || throw(DimensionMismatch("The dimension of the vector c, $(length(c)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
-
-    begin
-        if p == 1 && q == 1
-            # a*b
-            A_mul_B!(c, offset_c, a, b, offset_b, 1)
-        elseif q == 1
-            #  (I_p ⊗ a)*b = vec(a*[b_1 b_2 ... b_p])
-            A_mul_B!(c, offset_c, a, b, offset_b, p)
-        elseif p == 1
-            # (a ⊗ I_q)*b = (b'*(a' ⊗ I_q))' = vec(reshape(b,q,m)*a')
-            A_mul_Bt!(c, offset_c, b, offset_b, q, n, a)
-        else
-            # (I_p ⊗ a ⊗ I_q)*b = vec([(a ⊗ I_q)*b_1 (a ⊗ I_q)*b_2 ... (a ⊗ I_q)*b_p])
-            mq = m*q
-            nq = n*q
-            for i=1:p
-                A_mul_Bt!(c, offset_c, b, offset_b, q, n, a)
-                offset_b += nq
-                offset_c += mq
-            end
-        end
-    end
-end
-
-function kron_mul_elem!(c::AbstractVector, a::AbstractMatrix, b::AbstractVector, p::Int64, q::Int64)
-    kron_mul_elem!(c, 1, a, b, 1, p, q)
-end
-
-
-"""
-    kron_mul_elem_t!(p::Int64, q::Int64, m::Int64, a::AbstractMatrix, b::AbstractVector, c::AbstractVector)
-
-Performs (I_p ⊗ a' ⊗ I_q) b, where m,n = size(a). The result is stored in c.
-"""
-function kron_mul_elem_t!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b::AbstractVector, offset_b::Int64, p::Int64, q::Int64)
-    m, n = size(a)
-    length(b) >= m*p*q || throw(DimensionMismatch("The dimension of vector b, $(length(b)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
-    length(c) >= n*p*q || throw(DimensionMismatch("The dimension of the vector c, $(length(c)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
-    
-    begin
-        if p == 1 && q == 1
-            # a'*b
-            At_mul_B!(c, offset_c, a, b, offset_b, 1)
-        elseif q == 1
-            #  (I_p ⊗ a')*b = vec(a'*[b_1 b_2 ... b_p])
-            At_mul_B!(c, offset_c, a, b, offset_b, p)
-        elseif p == 1
-            # (a' ⊗ I_q)*b = (b'*(a ⊗ I_q))' = vec(reshape(b,q,m)*a)
-            A_mul_B!(c, offset_c, b, offset_b, q, m, a)
-        else
-            # (I_p ⊗ a' ⊗ I_q)*b = vec([(a' ⊗ I_q)*b_1 (a' ⊗ I_q)*b_2 ... (a' ⊗ I_q)*b_p])
-            mq = m*q
-            nq = n*q
-            for i=1:p
-                A_mul_B!(c, offset_c, b, offset_b, q, m, a)
-                offset_b += mq
-                offset_c += nq
-            end
-        end
-    end
-end
-
-function kron_mul_elem_t!(c::AbstractVector, a::AbstractMatrix, b::AbstractVector, p::Int64, q::Int64)
-    kron_mul_elem_t!(c, 1, a, b, 1, p, q)
-end
 
 end

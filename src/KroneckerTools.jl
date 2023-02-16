@@ -51,19 +51,19 @@ function kron_mul_elem!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b
     begin
         if p == 1 && q == 1
             # a*b
-            A_mul_B!(c, offset_c, a, b, offset_b, 1)
+            _mul!(c, offset_c, a, b, offset_b, 1)
         elseif q == 1
             #  (I_p ⊗ a)*b = vec(a*[b_1 b_2 ... b_p])
-            A_mul_B!(c, offset_c, a, b, offset_b, p)
+            _mul!(c, offset_c, a, b, offset_b, p)
         elseif p == 1
             # (a ⊗ I_q)*b = (b'*(a' ⊗ I_q))' = vec(reshape(b,q,m)*a')
-            A_mul_Bt!(c, offset_c, b, offset_b, q, n, a)
+            _mul!(c, offset_c, b, offset_b, q, n, a')
         else
             # (I_p ⊗ a ⊗ I_q)*b = vec([(a ⊗ I_q)*b_1 (a ⊗ I_q)*b_2 ... (a ⊗ I_q)*b_p])
             mq = m*q
             nq = n*q
             for i=1:p
-                A_mul_Bt!(c, offset_c, b, offset_b, q, n, a)
+                _mul!(c, offset_c, b, offset_b, q, n, a')
                 offset_b += nq
                 offset_c += mq
             end
@@ -89,19 +89,19 @@ function kron_mul_elem_t!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix,
     begin
         if p == 1 && q == 1
             # a'*b
-            At_mul_B!(c, offset_c, a, b, offset_b, 1)
+            _mul!(c, offset_c, a', b, offset_b, 1)
         elseif q == 1
             #  (I_p ⊗ a')*b = vec(a'*[b_1 b_2 ... b_p])
-            At_mul_B!(c, offset_c, a, b, offset_b, p)
+            _mul!(c, offset_c, a', b, offset_b, p)
         elseif p == 1
             # (a' ⊗ I_q)*b = (b'*(a ⊗ I_q))' = vec(reshape(b,q,m)*a)
-            A_mul_B!(c, offset_c, b, offset_b, q, m, a)
+            _mul!(c, offset_c, b, offset_b, q, m, a)
         else
             # (I_p ⊗ a' ⊗ I_q)*b = vec([(a' ⊗ I_q)*b_1 (a' ⊗ I_q)*b_2 ... (a' ⊗ I_q)*b_p])
             mq = m*q
             nq = n*q
             for i=1:p
-                A_mul_B!(c, offset_c, b, offset_b, q, m, a)
+                _mul!(c, offset_c, b, offset_b, q, m, a)
                 offset_b += mq
                 offset_c += nq
             end
@@ -207,7 +207,7 @@ computes d = (a^T ⊗ a^T ⊗ ... ⊗ a^T ⊗ b)c using data from c at offset_c 
 function kron_at_kron_b_mul_c!(d::AbstractVector, offset_d::Int64, a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, offset_c::Int64, work1::AbstractVector, work2::AbstractVector, offset_w::Int64)
     mb,nb = size(b)
     if order == 0
-        A_mul_B!(d,offset_d,b,1,mb,nb,c,offset_c,1)
+        _mul!(d,offset_d,b,1,mb,nb,c,offset_c,1)
     else
         ma, na = size(a)
         #    length(work) == naorder*mb  || throw(DimensionMismatch("The dimension of vector , $(length(c)) doesn't correspond to order, ($order)  and the dimension of the matrices a, $(size(a)), and b, $(size(b))"))
@@ -234,7 +234,7 @@ computes d = (a^T ⊗ a^T ⊗ ... ⊗ a^T ⊗ b)c using work vectors work1 and w
 function kron_at_kron_b_mul_c!(d::AbstractVector, a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, work1::AbstractVector, work2::AbstractVector)
     mb,nb = size(b)
     if order == 0
-        A_mul_B!(d,1,b,1,mb,nb,c,1,1)
+        _mul!(d,1,b,1,mb,nb,c,1,1)
     else
         ma, na = size(a)
         #    length(work) == naorder*mb  || throw(DimensionMismatch("The dimension of vector , $(length(c)) doesn't correspond to order, ($order)  and the dimension of the matrices a, $(size(a)), and b, $(size(b))"))
@@ -313,11 +313,11 @@ function at_mul_b_kron_c!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatri
     mb, nb = size(b)
     mc, nc = size(c)
     if mc <= nc
-        At_mul_B!(work1, 1, a, 1, na, ma, b, 1, nb)
+        _mul!(work1, 1, a', 1, na, ma, b, 1, nb)
         kron_at_mul_b!(vec(d), c, order, work1, na, vec(d), work2)
     else
         kron_at_mul_b!(work1, c, order, b, na, work1, work2)
-        At_mul_B!(vec(d), 1, a, 1, na, ma, work1, 1, nc^order)
+        _mul!(vec(d), 1, a', 1, na, ma, work1, 1, nc^order)
     end
 end
                       
@@ -326,11 +326,11 @@ function a_mul_b_kron_ct!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatri
     mb, nb = size(b)
     mc, nc = size(c)
     if mc <= nc
-        A_mul_B!(work1, 1, a, 1, ma, na, b, 1, nb)
+        _mul!(work1, 1, a, 1, ma, na, b, 1, nb)
         kron_a_mul_b!(vec(d), c, order, work1, ma, work1, work2)
     else
         kron_a_mul_b!(work1, b, order, c, mb, work1, work2)
-        At_mul_B!(vec(d), 1, a, 1, na, ma, work1, 1, nc^order)
+        _mul!(vec(d), 1, a', 1, na, ma, work1, 1, nc^order)
     end
 end
                       
@@ -389,7 +389,7 @@ function a_mul_b_kron_c_d!(e::AbstractMatrix, a::AbstractMatrix, b::AbstractMatr
      na == mb || throw(DimensionMismatch("The number of columns of a, $(size(a,2)), doesn't match the number of rows of b, $(size(b,1))"))
      nb == mc*md^(order-1) || throw(DimensionMismatch("The number of columns of b, $(size(b,2)), doesn't match the number of rows of c, $(size(c,1)), and d, $(size(d,1)) for order, $order"))
      (ma == me && nc*nd^(order-1) == ne) || throw(DimensionMismatch("Dimension mismatch for e: $(size(e)) while ($ma, $(nc*nd^(order-1))) was expected"))
-     A_mul_B!(work1, 1, a, 1, ma, mb, vec(b), 1, nb)
+     _mul!(work1, 1, a, 1, ma, mb, vec(b), 1, nb)
      p = mc*md^(order - 2)
      q = ma
      for i = 0:order - 2

@@ -2,7 +2,7 @@ using LinearAlgebra: BlasInt
 using LinearAlgebra.BLAS
 import LinearAlgebra.BLAS: gemm!, @blasfunc, libblas
 
-export A_mul_B!, At_mul_B!, A_mul_Bt!, At_mul_B!
+export _mul!
 
 function gemm!(ta::Char, tb::Char, alpha::Float64,
                a::Union{Ref{Float64}, AbstractVecOrMat{Float64}}, ma::Int64, na::Int64,
@@ -19,33 +19,33 @@ function gemm!(ta::Char, tb::Char, alpha::Float64,
           max(ma, 1))
 end
 
-# A_mul_B!
-function A_mul_B!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
-                  a::AbstractVecOrMat{Float64}, offset_a::Int64, ma::Int64, na::Int64,
-                  b::AbstractVecOrMat{Float64}, offset_b::Int64, nb::Int64)
+# a * b, 3 methods (A_mul_B!) 
+function _mul!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
+               a::AbstractVecOrMat{Float64}, offset_a::Int64, ma::Int64, na::Int64,
+               b::AbstractVecOrMat{Float64}, offset_b::Int64, nb::Int64)
     gemm!('N', 'N', 1.0, Ref(a, offset_a), ma, na, Ref(b, offset_b),
           nb, 0.0, Ref(c, offset_c))
 end
 
-function A_mul_B!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
-                  a::AbstractVecOrMat{Float64}, offset_a::Int64, ma::Int64, na::Int64,
-                  b::AbstractVecOrMat{Float64})
+function _mul!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
+               a::AbstractVecOrMat{Float64}, offset_a::Int64, ma::Int64, na::Int64,
+               b::AbstractVecOrMat{Float64})
     nb = (ndims(b) > 1) ? size(b, 2) : 1
-    A_mul_B!(c, offset_c, a, offset_a, ma, na, b, 1, nb)
+    _mul!(c, offset_c, a, offset_a, ma, na, b, 1, nb)
 end
 
-function A_mul_B!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
-                  a::AbstractVecOrMat{Float64},
-                  b::AbstractVecOrMat{Float64}, offset_b::Int64, nb::Int64)
+function _mul!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
+               a::AbstractVecOrMat{Float64},
+               b::AbstractVecOrMat{Float64}, offset_b::Int64, nb::Int64)
     ma = size(a, 1)
     na = (ndims(a) > 1) ? size(a, 2) : 1
-    A_mul_B!(c, offset_c, a, 1, ma, na, b, offset_b, nb)
+    _mul!(c, offset_c, a, 1, ma, na, b, offset_b, nb)
 end
 
-# At_mul_B!
-function At_mul_B!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
-                   a::AbstractVecOrMat{Float64}, offset_a::Int64, ma::Int64, na::Int64,
-                   b::AbstractVecOrMat{Float64}, offset_b::Int64, nb::Int64)
+# a' * b, 2 methods (At_mul_B!)
+function _mul!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
+               a::Adjoint{Float64}, offset_a::Int64, ma::Int64, na::Int64,
+               b::AbstractVecOrMat{Float64}, offset_b::Int64, nb::Int64)
     ccall((@blasfunc(dgemm_), libblas), Cvoid,
           (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt},
            Ref{BlasInt}, Ref{Float64}, Ptr{Float64}, Ref{BlasInt},
@@ -57,18 +57,20 @@ function At_mul_B!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
           max(ma, 1))
 end
 
-function At_mul_B!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
-                   a::AbstractVecOrMat{Float64},
-                   b::AbstractVecOrMat{Float64}, offset_b::Int64, nb::Int64)
-    na = size(a, 1)
-    ma = (ndims(a) > 1) ? size(a, 2) : 1
-    At_mul_B!(c, offset_c, a, 1, ma, na, b, offset_b, nb)
+function _mul!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
+               a::Adjoint{Float64},
+               b::AbstractVecOrMat{Float64}, offset_b::Int64, nb::Int64)
+    na = size(a.parent, 1)
+    ma = (ndims(a.parent) > 1) ? size(a.parent, 2) : 1
+    _mul!(c, offset_c, a, 1, ma, na, b, offset_b, nb)
 end
 
-# A_mul_Bt!
-function A_mul_Bt!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
-                   a::AbstractVecOrMat{Float64}, offset_a::Int64, ma::Int64, na::Int64,
-                   b::AbstractVecOrMat{Float64}, offset_b::Int64, nb::Int64)
+# a * b', 2 methods (A_mul_Bt!)
+function _mul!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
+               a::AbstractVecOrMat{Float64}, offset_a::Int64, ma::Int64, na::Int64,
+               b::Adjoint{Float64}, offset_b::Int64, nb::Int64)
+    if typeof(b) <: Adjoint{Float64, QuasiUpperTriangular{Float64, Matrix{Float64}}}
+    end
     ccall((@blasfunc(dgemm_), libblas), Cvoid,
           (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt},
            Ref{BlasInt}, Ref{Float64}, Ptr{Float64}, Ref{BlasInt},
@@ -80,17 +82,17 @@ function A_mul_Bt!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
           max(ma, 1))
 end
 
-function A_mul_Bt!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
-                   a::AbstractVecOrMat{Float64}, offset_a::Int64, ma::Int64, na::Int64,
-                   b::AbstractVecOrMat{Float64})
-    nb = size(b, 1)
-    A_mul_Bt!(c, offset_c, a, offset_a, ma, na, b, 1, nb)
+function _mul!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
+               a::AbstractVecOrMat{Float64}, offset_a::Int64, ma::Int64, na::Int64,
+               b::Adjoint{Float64})
+    nb = size(b.parent, 1)
+    _mul!(c, offset_c, a, offset_a, ma, na, b, 1, nb)
 end
 
-# At_mul_Bt!
-function At_mul_Bt!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
-                    a::AbstractVecOrMat{Float64}, offset_a::Int64, ma::Int64, na::Int64,
-                    b::AbstractVecOrMat{Float64}, offset_b::Int64, nb::Int64)
+# a' * b', 1 method (At_mul_Bt!)
+function _mul!(c::AbstractVecOrMat{Float64}, offset_c::Int64,
+               a::Adjoint{Float64}, offset_a::Int64, ma::Int64, na::Int64,
+               b::Adjoint{Float64}, offset_b::Int64, nb::Int64)
     ccall((@blasfunc(dgemm_), libblas), Cvoid,
           (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt},
            Ref{BlasInt}, Ref{Float64}, Ptr{Float64}, Ref{BlasInt},

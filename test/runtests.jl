@@ -1,11 +1,11 @@
 using LinearAlgebra
 using Random
 using Test
-import KroneckerTools: kron_mul_elem!, kron_mul_elem_t!, a_mul_kron_b!,
-    a_mul_b_kron_c!, a_mul_b_kron_ct!, at_mul_b_kron_c!,
-    a_mul_b_kron_c_d!, kron_a_mul_b!, kron_at_mul_b!,
-    kron_at_kron_b_mul_c!, QuasiTriangular.QuasiUpperTriangular,
-    A_mul_B!, At_mul_B!, A_mul_Bt!, At_mul_Bt!
+import KroneckerTools: kron_mul_elem!, kron_mul_elem_t!, a_mul_kron_b!, a_mul_b_kron_c!,
+                       a_mul_b_kron_ct!, at_mul_b_kron_c!, a_mul_b_kron_c_d!, kron_a_mul_b!,
+                       kron_at_mul_b!, kron_at_kron_b_mul_c!,
+                       QuasiTriangular.QuasiUpperTriangular,
+                       _mul!
 
 Random.seed!(123)
 #a = rand(2,3)
@@ -45,8 +45,9 @@ for m in [1, 3]
 end
 =#
 
-@testset "KroneckerTools" verbose = true begin
+@testset "KroneckerTools" verbose=true begin
     @testset "ExtendedMul" begin
+        # a * b, 3 methods
         ma = 2
         na = 4
         a = randn(ma, na)
@@ -54,25 +55,43 @@ end
         nb = 3
         b = randn(mb, nb)
         c = randn(ma, nb)
-        A_mul_B!(c, 1, a, 1, ma, na, b, 1, nb)
+        _mul!(c, 1, a, 1, ma, na, b, 1, nb)
         @test c ≈ a * b
+        c = randn(ma, nb)
+        _mul!(c, 1, a, 1, ma, na, b)
+        @test c ≈ a * b
+        c = randn(ma, nb)
+        _mul!(c, 1, a, b, 1, nb)
+        @test c ≈ a * b
+
+        # a' * b, 2 methods
         mb = 2
         nb = 3
         b = randn(mb, nb)
         c = randn(na, nb)
-        At_mul_B!(c, 1, a, 1, na, ma, b, 1, nb)
+        _mul!(c, 1, a', 1, na, ma, b, 1, nb)
         @test c ≈ transpose(a) * b
+        c = randn(na, nb)
+        _mul!(c, 1, a', b, 1, nb)
+        @test c ≈ a' * b
+
+        # a * b', 2 methods
         nb = 4
         mb = 3
         b = randn(mb, nb)
         c = randn(ma, mb)
-        A_mul_Bt!(c, 1, a, 1, ma, na, b, 1, mb)
+        _mul!(c, 1, a, 1, ma, na, b', 1, mb)
         @test c ≈ a * transpose(b)
+        c = randn(ma, mb)
+        _mul!(c, 1, a, 1, ma, na, b')
+        @test c ≈ a * transpose(b)
+
+        # a' * b', 1 method
         mb = 4
         nb = 2
         b = randn(mb, nb)
         c = randn(na, mb)
-        At_mul_Bt!(c, 1, a, 1, na, ma, b, 1, mb)
+        _mul!(c, 1, a', 1, na, ma, b', 1, mb)
         @test c ≈ transpose(a) * transpose(b)
     end
 

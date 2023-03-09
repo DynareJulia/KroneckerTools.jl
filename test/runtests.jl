@@ -153,6 +153,18 @@ end
         kron_mul_elem!(c, a, b, p, q)
         @test c ≈ kron(kron(I(p), a), I(q)) * b_orig
 
+        order = 1
+        ma = 2
+        na = 4
+        q = 1
+        p = na^(order - 1)
+        a = rand(ma, na)
+        b_orig = rand(q * na^order)
+        c = rand(ma * p * q)
+        b = copy(b_orig)
+        kron_mul_elem!(c, a, b, p, q)
+        @test c ≈ kron(kron(I(p), a), I(q)) * b_orig
+        
         ma = 2
         na = 2
         a = randn(ma, na)
@@ -224,6 +236,50 @@ end
         kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
         kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
         @test d ≈ kron(kron(a', a'), b) * c
+
+        # 3 more calls to cover some branches
+        order = 2
+        ma = 2
+        na = 4
+        a = randn(ma, na)
+        mb = 1
+        nb = 8
+        b = randn(mb, nb)
+        c = randn(ma * ma * nb)
+        d = randn(na * na * mb)
+        work1 = rand(na * na * mb)
+        work2 = rand(na * na * mb)
+        kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
+        kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
+        @test d ≈ kron(kron(a', a'), b) * c
+
+        order = 1
+        ma = 2
+        na = 4
+        a = randn(ma, na)
+        mb = 1
+        nb = 8
+        b = randn(mb, nb)
+        c = randn(ma^order * nb)
+        d = randn(na^order * mb)
+        work1 = rand(na^order * mb)
+        work2 = rand(na^order * mb)
+        kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
+        @test d ≈ kron(a', b) * c
+
+        order = 0
+        ma = 2
+        na = 4
+        a = randn(ma, na)
+        mb = 2
+        nb = 8
+        b = randn(mb, nb)
+        c = randn(ma^order * nb)
+        d = randn(na^order * mb)
+        work1 = rand(na^order * mb)
+        work2 = rand(na^order * mb)
+        kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
+        @test d ≈ b * c
 
         @testset "kron_a_mul_b" begin
             order = 2

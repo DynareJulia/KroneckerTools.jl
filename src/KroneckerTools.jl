@@ -50,7 +50,6 @@ function kron_mul_elem!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b
 
     begin
         if p == 1 && q == 1
-            #FIXME: UNTESTED
             # a*b
             #OLD _mul!(c, offset_c, a, b, offset_b, 1)
             unsafe_mul!(c, a, b, offset1=offset_c, offset3=offset_b)
@@ -93,12 +92,10 @@ function kron_mul_elem_t!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix,
     
     begin
         if p == 1 && q == 1
-            #FIXME: UNTESTED
             # a'*b
             #OLD _mul!(c, offset_c, a', b, offset_b, 1)
             unsafe_mul!(c, a', b; offset1=offset_c, offset3=offset_b, cols3=1)
         elseif q == 1
-            #FIXME: UNTESTED
             #  (I_p ⊗ a')*b = vec(a'*[b_1 b_2 ... b_p])
             #OLD _mul!(c, offset_c, a', b, offset_b, p)
             unsafe_mul!(c, a', b; offset1=offset_c, offset3=offset_b, cols3=p)
@@ -134,6 +131,7 @@ We use vec(a*(b ⊗ b ⊗ ... ⊗ b)) = (b' ⊗ b' ⊗ ... ⊗ b' ⊗ I)vec(a)
 
 """
 function a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, order::Int64, work1::AbstractVector, work2::AbstractVector)
+    #FIXME: UNTESTED, this implementation with work vectors is untested
     ma, na = size(a)
     mb, nb = size(b)
     mc, nc = size(c)
@@ -248,7 +246,6 @@ computes d = (a^T ⊗ a^T ⊗ ... ⊗ a^T ⊗ b)c using work vectors work1 and w
 function kron_at_kron_b_mul_c!(d::AbstractVector, a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, work1::AbstractVector, work2::AbstractVector)
     mb,nb = size(b)
     if order == 0
-        #FIXME: UNTESTED
         #OLD _mul!(d,1,b,1,mb,nb,c,1,1)
         unsafe_mul!(d, b, c; rows2=mb, cols2=nb, cols3=1)
     else

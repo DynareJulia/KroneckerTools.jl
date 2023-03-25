@@ -191,6 +191,44 @@ end
         end
         @test d ≈ b_orig * cc
 
+        mc = 2
+        nc = 3
+        order = 4
+        c = randn(mc, nc)
+        mb = 2
+        b = randn(mb, mc^order)
+        b_orig = copy(b)
+        d = randn(mb, nc^order)
+        w1 = Vector{Float64}(undef, mb * nc^order)
+        w2 = Vector{Float64}(undef, mb * nc^order)
+
+        b = copy(b_orig)
+        a_mul_kron_b!(d, b, c, order, w1, w2)
+        cc = c
+        for i in 2:order
+            cc = kron(cc, c)
+        end
+        @test d ≈ b_orig * cc
+
+        b = randn(mc^order, mb)
+        b_orig = copy(b)
+        a_mul_kron_b!(d, b', c, order, w1, w2)
+        @test d ≈ b_orig' * cc
+
+        b = randn(mb, nc^order)
+        b_orig = copy(b)
+        d = randn(mb, mc^order)
+        w1 = Vector{Float64}(undef, mb * nc^order)
+        w2 = Vector{Float64}(undef, mb * nc^order)
+
+        b = copy(b_orig)
+        a_mul_kron_b!(d, b, c', order, w1, w2)
+        cc = c'
+        for i in 2:order
+            cc = kron(cc, c')
+        end
+        @test d ≈ b_orig * cc
+
         order = 3
         ma = 2
         na = 4

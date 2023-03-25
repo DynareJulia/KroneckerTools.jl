@@ -158,7 +158,7 @@ function a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, 
             v2 = view(v1parent,1:n2)
         end
     end
-    copy!(c,v2)
+    copyto!(c,v2)
 end
     
 function a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, order::Int64)

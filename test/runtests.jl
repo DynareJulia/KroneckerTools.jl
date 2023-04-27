@@ -121,22 +121,34 @@ end
             # a * b, a is Quasi
             n = 5
             a = QuasiUpperTriangular(triu(randn(n, n)))
+            a[2, 1] = 0.5
+            display(a)
             b = randn(n, n * 2)
+            display(b)
             c = randn(n, n * 2)
             unsafe_mul!(c, a, b)
-            @test c ≈ a * b
+            display(c)
+            display(a.data * b)
+            @test c ≈ a.data * b
+
+            # NEED TO ADD unsafe_mul!(c, a', b)
+            # a' * b, a is Quasi
+            # unsafe_mul!(c, a', b)
+            # @test c ≈ transpose(a.data) * b 
 
             # a * b', b is Quasi
             n = 4
             a = randn(n, n)
             b = QuasiUpperTriangular(triu(randn(n, n)))
+            b[2,1] = 0.5
+            display(b)
             c = randn(n, n)
             unsafe_mul!(c, a, b')
-            @test c ≈ a * transpose(b)
+            @test c ≈ a * transpose(b.data)
             # write output to a vector
             c = randn(n * n)
             unsafe_mul!(c, a, b')
-            @test c ≈ vec(a * transpose(b))
+            @test c ≈ vec(a * transpose(b.data))
         end
     end
 

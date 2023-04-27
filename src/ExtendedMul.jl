@@ -101,11 +101,10 @@ function unsafe_mul!(c::StridedVecOrMat, a::QuasiUpperTriangular, b::StridedVecO
     copyto!(c, offset1, b, offset3, rows3 * cols3)
     alpha = 1.0
     ext_trmm!('L', 'U', 'N', 'N', rows3, cols3, alpha, a.data, c, offset1)
-
     @inbounds for i in 2:rows2
         x = a[i, i - 1]
-        indb = offset3
-        indc = offset1 + 1
+        indb = offset3 + i - 2
+        indc = offset1 + i - 1
         @simd for j in 1:cols3
             c[indc] += x * b[indb]
             indb += rows2

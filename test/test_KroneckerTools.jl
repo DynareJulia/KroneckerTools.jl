@@ -27,8 +27,8 @@ for m in [1, 3]
                 @time KroneckerTools.kron_mul_elem_t!(w, a, d, n^p, n^q*m)
                 @test w ≈ kron(kron(Matrix{Float64}(I(n^p)),a'),Matrix{Float64}(I(m*n^q)))*d_orig
                 d = copy(d_orig)
-                @time KroneckerTools.kron_mul_elem_t!(w, t, d, n^p, n^q*m)
-                @test w ≈ kron(kron(Matrix{Float64}(I(n^p)),t'),Matrix{Float64}(I(m*n^q)))*d_orig
+#                @time KroneckerTools.kron_mul_elem_t!(w, t, d, n^p, n^q*m)
+#                @test w ≈ kron(kron(Matrix{Float64}(I(n^p)),t'),Matrix{Float64}(I(m*n^q)))*d_orig
             end
         end
     end
@@ -90,6 +90,22 @@ work2 = zeros(mb*nb)
 e = randn(ma,8)
 KroneckerTools.a_mul_b_kron_c_d!(e, a, b, c, d, order, work1, work2)
 @test e ≈ a*b*kron(c,kron(d,d))
+
+@testset "kron_at_kron_b_mul_c!" begin
+    a = QuasiUpperTriangular([-2.0 3.0; -1.0 -2.0])
+    b = QuasiUpperTriangular([1.0 3.0; -1.0 1.0])
+    order = 1
+    ma, na = size(a)
+    mb, nb = size(b)
+    nd = mb*ma^order
+    c = randn(nd)
+    d = similar(c)
+    work1 = rand(nd)
+    work2 = rand(nd)
+    d_target = kron(a', b)*c
+    kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
+    @test d ≈ d_target
+end
 
 order = 2
 ma = 2

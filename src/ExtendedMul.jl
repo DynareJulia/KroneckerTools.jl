@@ -95,9 +95,12 @@ function unsafe_mul!(c::StridedVecOrMat, a::QuasiUpperTriangular, b::StridedVecO
                      offset1::Int = 1, offset2::Int = 1, offset3::Int = 1,
                      rows2::Int = size(a, 1), cols2::Int = size(a, 2),
                      cols3::Int = size(b, 2))
+    rows3 = cols2
+    if b isa StridedVector && cols3 == 1
+        cols3 = Int((length(b) - offset3 + 1) / rows3)
+    end
     blas_check(c, a, b, offset1, offset2, offset3, rows2, cols2, cols3)
 
-    rows3 = cols2
     copyto!(c, offset1, b, offset3, rows3 * cols3)
     alpha = 1.0
     ext_trmm!('L', 'U', 'N', 'N', rows3, cols3, alpha, a.data, c, offset1)
@@ -118,16 +121,21 @@ function unsafe_mul!(c::StridedVecOrMat, a::StridedVecOrMat, b::QuasiUpperTriang
                      offset1::Int = 1, offset2::Int = 1, offset3::Int = 1,
                      rows2::Int = size(a, 1), cols2::Int = size(a, 2),
                      cols3::Int = size(b, 2))
+    rows3 = size(b, 1)
+    if a isa StridedVector && cols2 == 1
+        cols2 = rows3
+        rows2 = Int((length(a) - offset2 + 1) / cols2)
+    end
     blas_check(c, a, b, offset1, offset2, offset3, rows2, cols2, cols3)
 
     copyto!(c, offset1, a, offset2, rows2 * cols2)
     alpha = 1.0
     ext_trmm!('R', 'U', 'N', 'N', rows2, cols2, alpha, b.data, c, offset1)
 
-    inda = offset2 + rows2
-    indc = offset1
     @inbounds for i in 2:cols2
         x = b[i, i - 1]
+        inda = offset2 + rows2 * (i - 1)
+        indc = offset1 + rows2 * (i - 2)
         @simd for j in 1:rows2
             c[indc] += x * a[inda]
             inda += 1

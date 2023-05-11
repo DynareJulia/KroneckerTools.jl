@@ -4,7 +4,7 @@ using Test
 import KroneckerTools: kron_mul_elem!, kron_mul_elem_t!, a_mul_kron_b!, a_mul_b_kron_c!,
                        a_mul_b_kron_ct!, at_mul_b_kron_c!, a_mul_b_kron_c_d!, kron_a_mul_b!,
                        kron_at_mul_b!, kron_at_kron_b_mul_c!,
-                       QuasiTriangular.QuasiUpperTriangular, 
+                       QuasiTriangular.QuasiUpperTriangular,
                        ext_gemm!, ext_trmm!, unsafe_mul!
 
 Random.seed!(123)
@@ -122,13 +122,9 @@ end
             n = 5
             a = QuasiUpperTriangular(triu(randn(n, n)))
             a[2, 1] = 0.5
-            display(a)
             b = randn(n, n * 2)
-            display(b)
             c = randn(n, n * 2)
             unsafe_mul!(c, a, b)
-            display(c)
-            display(a.data * b)
             @test c ≈ a.data * b
 
             # NEED TO ADD unsafe_mul!(c, a', b)
@@ -140,8 +136,7 @@ end
             n = 4
             a = randn(n, n)
             b = QuasiUpperTriangular(triu(randn(n, n)))
-            b[2,1] = 0.5
-            display(b)
+            b[2, 1] = 0.5
             c = randn(n, n)
             unsafe_mul!(c, a, b')
             @test c ≈ a * transpose(b.data)
@@ -149,6 +144,28 @@ end
             c = randn(n * n)
             unsafe_mul!(c, a, b')
             @test c ≈ vec(a * transpose(b.data))
+
+            # a * b, a is Quasi, b is passed as a vector
+            ma = 4
+            na = 4
+            mb = 4
+            nb = 3
+            a = QuasiUpperTriangular(randn(ma, na))
+            b = randn(mb, nb)
+            c = randn(ma, nb)
+            unsafe_mul!(c, a, vec(b))
+            @test c ≈ a * b
+
+            # a * b, b is Quasi, a is passed as a vector
+            ma = 3
+            na = 4
+            mb = 4
+            nb = 4
+            a = randn(ma, na)
+            b = QuasiUpperTriangular(randn(mb, nb))
+            c = randn(ma, nb)
+            unsafe_mul!(c, vec(a), b)
+            @test c ≈ a * b
         end
     end
 
@@ -176,7 +193,7 @@ end
         b = copy(b_orig)
         kron_mul_elem!(c, a, b, p, q)
         @test c ≈ kron(kron(I(p), a), I(q)) * b_orig
-        
+
         ma = 2
         na = 2
         a = randn(ma, na)

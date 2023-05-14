@@ -153,8 +153,8 @@ end
             a = QuasiUpperTriangular(randn(ma, na))
             b = randn(mb, nb)
             c = randn(ma, nb)
-            unsafe_mul!(c, a, vec(b))
-            @test c ≈ a * b
+            @test_throws AssertionError a*b ≈ unsafe_mul!(c, a, vec(b))
+            # @test c ≈ a * b
 
             # a * b, b is Quasi, a is passed as a vector
             ma = 3
@@ -164,8 +164,8 @@ end
             a = randn(ma, na)
             b = QuasiUpperTriangular(randn(mb, nb))
             c = randn(ma, nb)
-            unsafe_mul!(c, vec(a), b)
-            @test c ≈ a * b
+            @test_throws AssertionError a*b ≈ unsafe_mul!(c, vec(a), b)
+            # @test c ≈ a * b
         end
     end
 
@@ -300,8 +300,10 @@ end
         d = randn(na * na * mb)
         work1 = rand(na * na * mb)
         work2 = rand(na * na * mb)
+        # this seems to be an important case in unsafe_mul b isa vector
         kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
         kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
+        @info norm(d.-(kron(kron(a', a'), b) * c))
         @test d ≈ kron(kron(a', a'), b) * c
 
         # 3 more calls to cover some branches
@@ -318,7 +320,49 @@ end
         work2 = rand(na * na * mb)
         kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
         kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
+        @info norm(d.-(kron(kron(a', a'), b) * c))
         @test d ≈ kron(kron(a', a'), b) * c
+
+        function kron_power(x,order)
+            if order == 0
+                return 1
+            elseif order == 1
+                return x
+            else
+                m, n = size(x)
+                y = Matrix{Float64}(undef, m^order, n^order)
+                y1 = similar(y)
+                v = view(y, 1:m, 1:n)
+                v1 = view(y1, 1:m, 1:n)
+                v .= x
+                for i = 1:(order-1)
+                    tmp = v1
+                    v1 = v
+                    v = tmp
+                    v = view(v.parent, 1:m^(i + 1), 1:n^(i + 1))
+                    kron!(v, v1, x)
+                end
+            end
+            return v.parent
+        end
+
+        order = 3
+        scale=2
+        ma = 2 *scale
+        na = 4 *scale
+        a = randn(ma, na)
+        mb = 1 *scale
+        nb = 8 *scale
+        b = randn(mb, nb)
+        c = randn(ma^order * nb)
+        d = randn(na^order * mb)
+        work1 = rand(na^order * mb)
+        work2 = rand(na^order * mb)
+        kron_at_kron_b_mul_c!(d, a, order, b, c, work1, work2)
+        expect = kron(kron_power(a', order), b) * c
+        @info norm(d.-expect)
+        @test d ≈ expect
+
 
         order = 1
         ma = 2

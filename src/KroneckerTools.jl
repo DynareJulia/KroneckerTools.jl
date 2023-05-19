@@ -236,6 +236,7 @@ function kron_at_kron_b_mul_c!(d::AbstractVector, offset_d::Int64, a::AbstractMa
         end
         copyto!(d, offset_d, work2, offset_w, p*na*q)
     end
+    return d
 end
 
 """
@@ -264,6 +265,7 @@ function kron_at_kron_b_mul_c!(d::AbstractVector, a::AbstractMatrix, order::Int6
         end
         copyto!(d,1,work2,1,p*na*q)
     end
+    return d
 end
 
 """
@@ -273,6 +275,7 @@ updates c at offset_c with (a^T ⊗ a^T ⊗ ... ⊗ a^T ⊗ b)c using c and work
 function kron_at_kron_b_mul_c!(a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, offset_c::Int64, work::AbstractVector)
     kron_at_kron_b_mul_c!(work, 1, a, order, b, c, offset_c, work, c, offset_c)
     copy!(c, work)
+    return c
 end
 
 """

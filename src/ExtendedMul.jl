@@ -96,9 +96,6 @@ function unsafe_mul!(c::StridedVecOrMat, a::QuasiUpperTriangular, b::StridedVecO
                      rows2::Int = size(a, 1), cols2::Int = size(a, 2),
                      cols3::Int = size(b, 2))
     rows3 = cols2
-    if b isa StridedVector && cols3 == 1
-        cols3 = Int((length(b) - offset3 + 1) / rows3)
-    end
     blas_check(c, a, b, offset1, offset2, offset3, rows2, cols2, cols3)
 
     copyto!(c, offset1, b, offset3, rows3 * cols3)
@@ -122,10 +119,6 @@ function unsafe_mul!(c::StridedVecOrMat, a::StridedVecOrMat, b::QuasiUpperTriang
                      rows2::Int = size(a, 1), cols2::Int = size(a, 2),
                      cols3::Int = size(b, 2))
     rows3 = size(b, 1)
-    if a isa StridedVector && cols2 == 1
-        cols2 = rows3
-        rows2 = Int((length(a) - offset2 + 1) / cols2)
-    end
     blas_check(c, a, b, offset1, offset2, offset3, rows2, cols2, cols3)
 
     copyto!(c, offset1, a, offset2, rows2 * cols2)

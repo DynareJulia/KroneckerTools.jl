@@ -153,7 +153,7 @@ end
             a = QuasiUpperTriangular(randn(ma, na))
             b = randn(mb, nb)
             c = randn(ma, nb)
-            unsafe_mul!(c, a, vec(b))
+            unsafe_mul!(c, a, vec(b), cols3=nb)
             @test c ≈ a * b
 
             # a * b, b is Quasi, a is passed as a vector
@@ -164,7 +164,7 @@ end
             a = randn(ma, na)
             b = QuasiUpperTriangular(randn(mb, nb))
             c = randn(ma, nb)
-            unsafe_mul!(c, vec(a), b)
+            unsafe_mul!(c, vec(a), b, rows2=ma, cols2=na)
             @test c ≈ a * b
         end
     end

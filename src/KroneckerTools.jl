@@ -335,6 +335,7 @@ function at_mul_b_kron_c!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatri
         kron_at_mul_b!(vec(d), c, order, work1, na, vec(d), work2)
     else
         #FIXME: UNTESTED
+        throw(ErrorException("Branch not implemented yet")) #4th argument of kron_at_mul_b expects a vector
         kron_at_mul_b!(work1, c, order, b, na, work1, work2)
         #OLD _mul!(vec(d), 1, a', 1, na, ma, work1, 1, nc^order)
         unsafe_mul!(vec(d), a', work1; rows2=na, cols2=ma, cols3=nc^order)
@@ -351,6 +352,7 @@ function a_mul_b_kron_ct!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatri
         unsafe_mul!(work1, a, b)
         kron_a_mul_b!(vec(d), c, order, work1, ma, work1, work2)
     else
+        throw(ErrorException("Branch not implemented yet")) #4th argument of kron_a_mul_b expects a vector
         #FIXME: UNTESTED
         kron_a_mul_b!(work1, b, order, c, mb, work1, work2)
         #OLD _mul!(vec(d), 1, a', 1, na, ma, work1, 1, nc^order)

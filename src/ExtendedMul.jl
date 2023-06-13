@@ -164,4 +164,10 @@ function unsafe_mul!(c::StridedVecOrMat, a::StridedVecOrMat,
     end
     return c
 end
+
+function unsafe_mul!(c::StridedVecOrMat, aAdj::Adjoint{Float64, <:QuasiUpperTriangular},
+                     b::StridedVecOrMat; offset1::Int = 1,
+                     offset2::Int = 1, offset3::Int = 1, rows2::Int = size(aAdj, 1),
+                     cols2::Int = size(aAdj, 2), cols3::Int = size(b, 2))
+    throw(ErrorException("Method not implemented yet"))
 end

@@ -48,31 +48,30 @@ function kron_mul_elem!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix, b
     length(b) >= n*p*q || throw(DimensionMismatch("The dimension of vector b, $(length(b)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
     length(c) >= m*p*q || throw(DimensionMismatch("The dimension of the vector c, $(length(c)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
 
-    begin
-        if p == 1 && q == 1
-            # a*b
-            #OLD _mul!(c, offset_c, a, b, offset_b, 1)
-            unsafe_mul!(c, a, b, offset1=offset_c, offset3=offset_b)
-        elseif q == 1
-            #  (I_p ⊗ a)*b = vec(a*[b_1 b_2 ... b_p])
-            #OLD _mul!(c, offset_c, a, b, offset_b, p)
-            unsafe_mul!(c, a, b; offset1=offset_c, offset3=offset_b, cols3=p)
-        elseif p == 1
-            # (a ⊗ I_q)*b = (b'*(a' ⊗ I_q))' = vec(reshape(b,q,m)*a')
+    if p == 1 && q == 1
+        # a*b
+        #OLD _mul!(c, offset_c, a, b, offset_b, 1)
+        unsafe_mul!(c, a, b, offset1=offset_c, offset3=offset_b)
+    elseif q == 1
+        #  (I_p ⊗ a)*b = vec(a*[b_1 b_2 ... b_p])
+        #OLD _mul!(c, offset_c, a, b, offset_b, p)
+        unsafe_mul!(c, a, b; offset1=offset_c, offset3=offset_b, cols3=p)
+    elseif p == 1
+        # (a ⊗ I_q)*b = (b'*(a' ⊗ I_q))' = vec(reshape(b,q,m)*a')
+        #OLD _mul!(c, offset_c, b, offset_b, q, n, a')
+        unsafe_mul!(c, b, a'; offset1=offset_c, offset2=offset_b, rows2=q, cols2=n)
+    else
+        # (I_p ⊗ a ⊗ I_q)*b = vec([(a ⊗ I_q)*b_1 (a ⊗ I_q)*b_2 ... (a ⊗ I_q)*b_p])
+        mq = m*q
+        nq = n*q
+        for i=1:p
             #OLD _mul!(c, offset_c, b, offset_b, q, n, a')
             unsafe_mul!(c, b, a'; offset1=offset_c, offset2=offset_b, rows2=q, cols2=n)
-        else
-            # (I_p ⊗ a ⊗ I_q)*b = vec([(a ⊗ I_q)*b_1 (a ⊗ I_q)*b_2 ... (a ⊗ I_q)*b_p])
-            mq = m*q
-            nq = n*q
-            for i=1:p
-                #OLD _mul!(c, offset_c, b, offset_b, q, n, a')
-                unsafe_mul!(c, b, a'; offset1=offset_c, offset2=offset_b, rows2=q, cols2=n)
-                offset_b += nq
-                offset_c += mq
-            end
+            offset_b += nq
+            offset_c += mq
         end
     end
+    return c
 end
 
 function kron_mul_elem!(c::AbstractVector, a::AbstractMatrix, b::AbstractVector, p::Int64, q::Int64)
@@ -90,31 +89,30 @@ function kron_mul_elem_t!(c::AbstractVector, offset_c::Int64, a::AbstractMatrix,
     length(b) >= m*p*q || throw(DimensionMismatch("The dimension of vector b, $(length(b)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
     length(c) >= n*p*q || throw(DimensionMismatch("The dimension of the vector c, $(length(c)) doesn't correspond to order, ($p, $q)  and the dimensions of the matrix, $(size(a))"))
     
-    begin
-        if p == 1 && q == 1
-            # a'*b
-            #OLD _mul!(c, offset_c, a', b, offset_b, 1)
-            unsafe_mul!(c, a', b; offset1=offset_c, offset3=offset_b, cols3=1)
-        elseif q == 1
-            #  (I_p ⊗ a')*b = vec(a'*[b_1 b_2 ... b_p])
-            #OLD _mul!(c, offset_c, a', b, offset_b, p)
-            unsafe_mul!(c, a', b; offset1=offset_c, offset3=offset_b, cols3=p)
-        elseif p == 1
-            # (a' ⊗ I_q)*b = (b'*(a ⊗ I_q))' = vec(reshape(b,q,m)*a)
+    if p == 1 && q == 1
+        # a'*b
+        #OLD _mul!(c, offset_c, a', b, offset_b, 1)
+        unsafe_mul!(c, a', b; offset1=offset_c, offset3=offset_b, cols3=1)
+    elseif q == 1
+        #  (I_p ⊗ a')*b = vec(a'*[b_1 b_2 ... b_p])
+        #OLD _mul!(c, offset_c, a', b, offset_b, p)
+        unsafe_mul!(c, a', b; offset1=offset_c, offset3=offset_b, cols3=p)
+    elseif p == 1
+        # (a' ⊗ I_q)*b = (b'*(a ⊗ I_q))' = vec(reshape(b,q,m)*a)
+        #OLD _mul!(c, offset_c, b, offset_b, q, m, a)
+        unsafe_mul!(c, b, a; offset1=offset_c, offset2=offset_b, rows2=q, cols2=m)
+    else
+        # (I_p ⊗ a' ⊗ I_q)*b = vec([(a' ⊗ I_q)*b_1 (a' ⊗ I_q)*b_2 ... (a' ⊗ I_q)*b_p])
+        mq = m*q
+        nq = n*q
+        for i=1:p
             #OLD _mul!(c, offset_c, b, offset_b, q, m, a)
             unsafe_mul!(c, b, a; offset1=offset_c, offset2=offset_b, rows2=q, cols2=m)
-        else
-            # (I_p ⊗ a' ⊗ I_q)*b = vec([(a' ⊗ I_q)*b_1 (a' ⊗ I_q)*b_2 ... (a' ⊗ I_q)*b_p])
-            mq = m*q
-            nq = n*q
-            for i=1:p
-                #OLD _mul!(c, offset_c, b, offset_b, q, m, a)
-                unsafe_mul!(c, b, a; offset1=offset_c, offset2=offset_b, rows2=q, cols2=m)
-                offset_b += mq
-                offset_c += nq
-            end
+            offset_b += mq
+            offset_c += nq
         end
     end
+    return c
 end
 
 function kron_mul_elem_t!(c::AbstractVector, a::AbstractMatrix, b::AbstractVector, p::Int64, q::Int64)
@@ -130,7 +128,6 @@ We use vec(a*(b ⊗ b ⊗ ... ⊗ b)) = (b' ⊗ b' ⊗ ... ⊗ b' ⊗ I)vec(a)
 
 """
 function a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, order::Int64, work1::AbstractVector, work2::AbstractVector)
-    #FIXME: UNTESTED, this implementation with work vectors is untested
     ma, na = size(a)
     mb, nb = size(b)
     mc, nc = size(c)
@@ -158,6 +155,7 @@ function a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, 
         end
     end
     copyto!(c,v2)
+    return c
 end
     
 function a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, order::Int64)
@@ -181,6 +179,7 @@ function a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, 
             copy!(avec,cvec)
         end
     end
+    return c
 end
     
 """
@@ -207,6 +206,7 @@ function a_mul_b_kron_c!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix
         end
     end
     copyto!(d,work2)
+    return d
 end
 
 """
@@ -241,7 +241,7 @@ end
 
 """
     function kron_at_kron_b_mul_c!(d::AbstractVector, a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, work1::AbstractVector, work2::AbstractVector)
-computes d = (a^T ⊗ a^T ⊗ ... ⊗ a^T ⊗ b)c using work vectors work1 and work2x
+computes d = (a^T ⊗ a^T ⊗ ... ⊗ a^T ⊗ b)c using work vectors work1 and work2
 """ 
 function kron_at_kron_b_mul_c!(d::AbstractVector, a::AbstractMatrix, order::Int64, b::AbstractMatrix, c::AbstractVector, work1::AbstractVector, work2::AbstractVector)
     mb,nb = size(b)
@@ -303,7 +303,9 @@ function kron_at_mul_b!(c::AbstractVector, a::AbstractMatrix, order::Int64, b::A
         end
     end
     copyto!(c,1,work2,1,s)
+    return c
 end
+
 function kron_a_mul_b!(c::AbstractVector, a::AbstractMatrix, order::Int64, b::AbstractVector, q::Int64, work1::AbstractVector, work2::AbstractVector)
     ma,na = size(a)
 #    length(work) == naorder*mb  || throw(DimensionMismatch("The dimension of vector , $(length(c)) doesn't correspond to order, ($order)  and the dimension of the matrices a, $(size(a)), and b, $(size(b))"))
@@ -320,6 +322,7 @@ function kron_a_mul_b!(c::AbstractVector, a::AbstractMatrix, order::Int64, b::Ab
         end
     end
     copyto!(c,1,work2,1,s)
+    return c
 end
 
 function at_mul_b_kron_c!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, c::AbstractMatrix, order::Int64, work1::AbstractVector, work2::AbstractVector)
@@ -336,6 +339,7 @@ function at_mul_b_kron_c!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatri
         #OLD _mul!(vec(d), 1, a', 1, na, ma, work1, 1, nc^order)
         unsafe_mul!(vec(d), a', work1; rows2=na, cols2=ma, cols3=nc^order)
     end
+    return d
 end
                       
 function a_mul_b_kron_ct!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, c::AbstractMatrix, order::Int64, work1::AbstractVector, work2::AbstractVector)
@@ -352,6 +356,7 @@ function a_mul_b_kron_ct!(d::AbstractMatrix, a::AbstractMatrix, b::AbstractMatri
         #OLD _mul!(vec(d), 1, a', 1, na, ma, work1, 1, nc^order)
         unsafe_mul!(vec(d), a', work1; rows2=na, cols2=ma, cols3=nc^order)
     end
+    return d
 end
                       
 function a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractVector,work::AbstractVector)
@@ -389,6 +394,7 @@ function a_mul_kron_b!(c::AbstractMatrix, a::AbstractMatrix, b::AbstractVector,w
             copy!(vwork,vcvec)
         end
     end
+    return c
 end
     
 """
@@ -400,7 +406,6 @@ We use vec(a*b*(c ⊗ d ⊗ ... ⊗ d)) = (c' ⊗ d' ⊗ ... ⊗ d' ⊗ a)vec(b)
 
 """
 function a_mul_b_kron_c_d!(e::AbstractMatrix, a::AbstractMatrix, b::AbstractMatrix, c::AbstractMatrix, d::AbstractMatrix, order::Int64, work1::AbstractVector, work2::AbstractVector)
-
      ma, na = size(a)
      mb, nb = size(b)
      mc, nc = size(c)
@@ -421,6 +426,7 @@ function a_mul_b_kron_c_d!(e::AbstractMatrix, a::AbstractMatrix, b::AbstractMatr
     end
     kron_mul_elem_t!(work2, c, work1, 1,q)
     copyto!(e, 1, work2, 1, ma*nc*nd^(order-1))
+    return e
 end
 
 convert(::Type{Array{Float64, 2}}, x::Base.ReshapedArray{Float64,2,SubArray{Float64,1,Array{Float64,1},Tuple{UnitRange{Int64}},true},Tuple{}}) = unsafe_wrap(Array,pointer(x.parent.parent,x.parent.indexes[1][1]),x.dims)

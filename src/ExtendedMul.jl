@@ -69,6 +69,7 @@ function blas_check(c, a, b, offset_c, offset_a, offset_b, ma, na, nb)
 
         #TODO: if A is a vector, ma is supplied and na is not. Do not default to na=1
     end
+    return nothing
 end
 
 ## QuasiUpperTriangular
@@ -161,5 +162,6 @@ function unsafe_mul!(c::StridedVecOrMat, a::StridedVecOrMat,
             indc += 1
         end
     end
-    c
+    return c
+end
 end

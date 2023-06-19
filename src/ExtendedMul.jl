@@ -44,8 +44,8 @@ end
 
 function unsafe_mul!(c::StridedVecOrMat, aAdj::Adjoint{Float64, <:StridedArray},
                      b::StridedVecOrMat; offset1::Int = 1, offset2::Int = 1,
-                     offset3::Int = 1, rows2::Int = size(aAdj, 2),
-                     cols2::Int = size(aAdj, 1), cols3::Int = size(b, 2))
+                     offset3::Int = 1, rows2::Int = size(aAdj, 1),
+                     cols2::Int = size(aAdj, 2), cols3::Int = size(b, 2))
     blas_check(c, aAdj, b, offset1, offset2, offset3, rows2, cols2, cols3)
     a = aAdj.parent
     ext_gemm!('T', 'N', rows2, cols3, cols2, 1, a, b, 0, c, offset2, offset3, offset1)

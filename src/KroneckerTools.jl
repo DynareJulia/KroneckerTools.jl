@@ -419,12 +419,12 @@ function a_mul_b_kron_c_d!(e::AbstractMatrix, a::AbstractMatrix, b::AbstractMatr
     # OLD _mul!(work1, 1, a, 1, ma, mb, b, 1, nb)
      unsafe_mul!(work1, a, b; rows2=ma, cols2=mb, cols3=nb)
      p = mc*md^(order - 2)
-     q = 1
-     for i = 0:order - 1
-         kron_mul_elem_t!(work2, 1, d, work1, 1, p, q)
-         copy!(work1,work2)
-         p = Int(p/md)
-         q *= nd
+     q = ma
+     for i = 0:order - 2
+        kron_mul_elem_t!(work2, 1, d, work1, 1, p, q)
+        copy!(work1,work2)
+        p = Int(p/md)
+        q *= nd
     end
     kron_mul_elem_t!(work2, c, work1, 1,q)
     copyto!(e, 1, work2, 1, ma*nc*nd^(order-1))

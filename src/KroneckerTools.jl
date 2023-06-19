@@ -402,7 +402,7 @@ end
 """
     a_mul_b_kron_c_d!(d::AbstractVecOrMat, a::AbstractVecOrMat, b::AbstractMatrix, c::AbstractMatrix, order::Int64)
 
-Performs e = a*b*(c ⊗ d ⊗ ... ⊗ d). The solution is returned in matrix or vector e order indicates the number of occurences of d. c and d must be square matrices
+Performs e = a*b*(c ⊗ d ⊗ ... ⊗ d). The solution is returned in matrix or vector e order indicates the number of occurences of d plus 1. c and d must be square matrices
 
 We use vec(a*b*(c ⊗ d ⊗ ... ⊗ d)) = (c' ⊗ d' ⊗ ... ⊗ d' ⊗ a)vec(b)
 
@@ -419,12 +419,12 @@ function a_mul_b_kron_c_d!(e::AbstractMatrix, a::AbstractMatrix, b::AbstractMatr
     # OLD _mul!(work1, 1, a, 1, ma, mb, b, 1, nb)
      unsafe_mul!(work1, a, b; rows2=ma, cols2=mb, cols3=nb)
      p = mc*md^(order - 2)
-     q = ma
-     for i = 0:order - 2
-        kron_mul_elem_t!(work2, 1, d, work1, 1, p, q)
-        copy!(work1,work2)
-        p = Int(p/md)
-        q *= nd
+     q = 1
+     for i = 0:order - 1
+         kron_mul_elem_t!(work2, 1, d, work1, 1, p, q)
+         copy!(work1,work2)
+         p = Int(p/md)
+         q *= nd
     end
     kron_mul_elem_t!(work2, c, work1, 1,q)
     copyto!(e, 1, work2, 1, ma*nc*nd^(order-1))

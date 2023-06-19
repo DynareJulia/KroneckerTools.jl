@@ -10,7 +10,13 @@ function ext_gemm!(ta::Char, tb::Char, ma::Int, nb::Int, na::Int, alpha,
     lda = ndims(a) == 2 ? strides(a)[2] : ma
     ldb = ndims(b) == 2 ? strides(b)[2] : na
     ldc = ndims(c) == 2 ? strides(c)[2] : ma
-
+    if (ta == 'T' || ta == 't') && size(a, 1) == 1
+        lda = na
+    end
+    if (tb == 'T' || tb == 't') && size(b, 1) == 1
+        ldb = nb
+    end
+        
     ccall((@blasfunc("dgemm_"), libblas), Cvoid,
           (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt}, Ref{BlasInt}, Ref{Float64},
            Ptr{Float64}, Ref{BlasInt}, Ptr{Float64}, Ref{BlasInt}, Ref{Float64},
@@ -38,8 +44,8 @@ end
 
 function unsafe_mul!(c::StridedVecOrMat, aAdj::Adjoint{Float64, <:StridedArray},
                      b::StridedVecOrMat; offset1::Int = 1, offset2::Int = 1,
-                     offset3::Int = 1, rows2::Int = size(aAdj, 1),
-                     cols2::Int = size(aAdj, 2), cols3::Int = size(b, 2))
+                     offset3::Int = 1, rows2::Int = size(aAdj, 2),
+                     cols2::Int = size(aAdj, 1), cols3::Int = size(b, 2))
     blas_check(c, aAdj, b, offset1, offset2, offset3, rows2, cols2, cols3)
     a = aAdj.parent
     ext_gemm!('T', 'N', rows2, cols3, cols2, 1, a, b, 0, c, offset2, offset3, offset1)

@@ -10,13 +10,7 @@ function ext_gemm!(ta::Char, tb::Char, ma::Int, nb::Int, na::Int, alpha,
     lda = ndims(a) == 2 ? strides(a)[2] : ma
     ldb = ndims(b) == 2 ? strides(b)[2] : na
     ldc = ndims(c) == 2 ? strides(c)[2] : ma
-    if (ta == 'T' || ta == 't') && size(a, 1) == 1
-        lda = na
-    end
-    if (tb == 'T' || tb == 't') && size(b, 1) == 1
-        ldb = nb
-    end
-        
+
     ccall((@blasfunc("dgemm_"), libblas), Cvoid,
           (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt}, Ref{BlasInt}, Ref{Float64},
            Ptr{Float64}, Ref{BlasInt}, Ptr{Float64}, Ref{BlasInt}, Ref{Float64},

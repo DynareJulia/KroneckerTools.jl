@@ -73,6 +73,18 @@ end
             @test res1 ≈ res2
         end
 
+        @testset "alias checking" begin
+             # output matrix must not be aliased (ie. view or reshape) with an input matrix 
+             a = randn(3, 3)
+             b = view(a, :, 1)
+             c = view(a, :, 3)
+             @test_throws ArgumentError unsafe_mul!(c, a, b)
+
+             # its ok if inputs are aliased
+             a = copy(a)
+             @test unsafe_mul!(c, a, b) ≈ a*b
+         end
+
         @testset "unsafe_mul! Matrix" begin
             ## trying a different combination of default arguments each time wdw
             # a * b

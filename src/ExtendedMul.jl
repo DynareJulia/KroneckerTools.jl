@@ -56,6 +56,10 @@ function unsafe_mul!(c::StridedVecOrMat, aAdj::Adjoint{Float64, <:StridedVecOrMa
 end
 
 function blas_check(c, a, b, offset_c, offset_a, offset_b, ma, na, nb)
+    if Base.mightalias(c, a) || Base.mightalias(c, b)
+        throw(ArgumentError("output matrix must not be aliased with an input matrix"))
+    end
+
     @boundscheck begin
         # Make sure offset is a sane value
         @assert (length(a) >= offset_a >= 1)

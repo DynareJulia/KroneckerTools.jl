@@ -135,7 +135,6 @@ end
             a = QuasiUpperTriangular(triu(randn(n, n)))
             a[2, 1] = 0.5
             a[4, 3] = -0.1
-            display(a)
             b = randn(n, n * 2)
             c = randn(n, n * 2)
             unsafe_mul!(c, a, b)
@@ -152,7 +151,6 @@ end
             b = QuasiUpperTriangular(triu(randn(n, n)))
             b[2,1] = 0.5
             b[4, 3] = -0.1
-            display(b)
             c = randn(n, n)
             unsafe_mul!(c, a, b')
             @test c ≈ a * transpose(b.data)
@@ -167,7 +165,6 @@ end
             b = QuasiUpperTriangular(triu(randn(n, n)))
             b[2,1] = 0.5
             b[4,3] = -0.1 
-            display(b)
             c = randn(n, n)
             unsafe_mul!(c, a, b')
             @test c ≈ a * transpose(b.data)
